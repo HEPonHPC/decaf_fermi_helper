@@ -1,0 +1,5 @@
+/fermi_helper.py
+/Dockerfile.staged
+*.swp
+*~
+/.git
