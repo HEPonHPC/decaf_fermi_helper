@@ -1,0 +1,126 @@
+NAME
+    fermi_helper.py - Build and run Fermi HEP workflow using Docker/Singularity
+
+SYNOPSIS
+    python3 fermi_helper.py build-docker-image [--tag TAG]
+        [--only-dependencies] [--pull-dependencies TAG] [--decaf-root ROOT]
+        [--decaf-repo REPO] [--decaf-repo-branch BRANCH]
+    python3 fermi_helper.py run-docker-image [--tag TAG] [--interactive]
+    python3 fermi_helper.py build-singularity-image [--tag TAG] [--sif SIF]
+    python3 fermi_helper.py run-singularity-image [--sif SIF] [--interactive]
+
+EXAMPLE
+    Install Python dependency to run this script
+        $ python3 -m pip install --user jinja2
+
+    Build the Docker image, using pre-built dependencies
+        $ python3 fermi_helper.py build-docker-image --pull-dependencies thobson2/decaf-fermi:0.2.0-base
+
+    Run the Docker image
+        $ python3 fermi_helper.py run-docker-image
+
+    Build the dependencies and push them to DockerHub
+        $ python3 fermi_helper.py build-docker-image --only-dependencies --tag USERNAME/decaf-fermi:0.2.0-base
+
+    Convert Docker image to Singularity image
+        $ python3 fermi_helper.py build-singularity-image
+    
+    Run Singularity image
+        $ python3 fermi_helper.py run-singularity-image
+
+DESCRIPTION
+    This script takes care of the build and execution process needed to run the
+    Fermi workflow using Decaf within Linux containers.
+
+    The build does everything within a container, which means that the entire
+    build process happens inside of Docker, and the image is, in a sense,
+    hermetically sealed away from the host system. The catch is that any change
+    to source code requires a complete re-build of all of Decaf and the
+    workflow, which can take up to 5 minutes.
+
+    Either build process happens within Docker first and uses a Dockerfile to
+    define the commands to be run. This Docker image can be used directly, or
+    can be converted into a Singularity image and then run using Singularity.
+
+    build-docker-image
+        Copy the source code into Docker and build Decaf and the Fermi
+        workflow.
+
+    run-docker-image
+        Run the workflow inside of Docker using the already-built Docker image.
+
+    build-singularity-image
+        Convert a Docker image into a Singularity image
+
+    run-singularity-image
+        Run the workflow inside of Singularity
+
+OPTIONS
+    --tag TAG
+        Set the Docker image tag to be used. If named something like
+        USERNAME/IMAGENAME:VERSION, then the image will be pushed to a Docker
+        registry afterwards. Otherwise, a name like IMAGENAME:VERSION will only
+        be saved locally.
+
+    --sif SIF
+        Set the path to the Singularity image to be used.
+
+    --interactive
+        Instead of immediately running the workflow, open a shell into the
+        container to manually run the workflow and debug.
+
+    --decaf-root ROOT
+        Set the location of the decaf source code (including Fermi workflow).
+
+    --decaf-repo REPO
+        If the Decaf root directory doesn't exist, Decaf is first cloned using
+        this repo url.
+
+    --decaf-repo-branch BRANCH
+        The branch to be checked out after cloning Decaf (see --decaf-repo).
+
+    --only-dependencies
+        Only build the dependencies inside of Docker, without compiled Decaf.
+
+    --pull-dependencies TAG
+        Instead of building the whole set of dependencies, use the pre-built
+        image TAG.
+
+FILES
+    go.sh
+        A helper script used in the Dockerfile to run CMake with the correct
+        arguments.
+
+    docker.env.sh
+        A helper script that sets some variables to be used inside the go.sh
+        script.
+
+NOTES
+    The build-docker-image and run-docker-image commands require Docker to be
+    installed, but do not require Singularity installed. Likewise,
+    build-singularity-image and run-singularity-image require Singularity, but
+    not Docker. This means that those commands can be run on different machines
+    (provided the image is pushed to a registry, c.f. --tag option above with a
+    "/" separator)
+
+BUGS
+    Currently, even if Python source code is changed, the hermetic build and
+    run process will rebuild everything, despite it being unnecessary for an
+    interpreted script. This could be fixed in one of two ways: 1) copy only
+    C++ source code first and then Python source code, or 2) build and run
+    incrementally.
+
+CHANGELOG
+    v0.2.0, 01 October 2020
+        Remove incremental building for now until it's been tested more. Right
+        now, only hermetic builds are supported, though now the dependencies
+        can be pre-built and saved to a Docker registry to be used. This needs
+        templates to work effectively, hence the introduction of the jinja2
+        library dependency.
+
+    v0.1.0, 24 September 2020
+        First release with full support for hermetic builds and in-progress
+        support for incremental ones.
+
+AUTHORS
+    Tanner Hobson <thobson2@vols.utk.edu>
