@@ -114,6 +114,23 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.1, 15 Octoboer 2020
+        Fixed a problem that would cause template parametrization to fail to
+        apply to the workflow which pythia8-diy would error out on.
+
+        The root cause is that pythia8-diy can read the mb7tev.txt file from a
+        few different places: in the current directory and in a subdirectory
+        (under "deleteMe"). Although the new mb7tev.txt file is created, the
+        old one is not automatically removed, so the workflow reads the wrong
+        file.
+
+        In the previous version, a remnant of the old runtime directory code
+        was used. In this version, moving a file from "$FERMI_PREFIX" would
+        correspond to moving it from the current directory. But now, the
+        current directory is nested under /tmp, so the file wasn't moved, and
+        in particular, the old one wasn't deleted. Now the file is moved from
+        the current directory, and this resolves the problem.
+
     v0.2.0, 01 October 2020
         Remove incremental building for now until it's been tested more. Right
         now, only hermetic builds are supported, though now the dependencies
@@ -161,15 +178,16 @@ hermeticscript = dedent("""\
     echo $PWD
 
     mkdir conf
-    mv "${FERMI_PREFIX:?}/mb7tev.txt" conf/
-    cp "${FERMI_PREFIX:?}/hep-fullWorkflow-inputPre.json" ./decaf-henson.json
+    mv mb7tev.txt conf/
+    cp hep-fullWorkflow-inputPre.json ./decaf-henson.json
     sed -ie 's!/home/oyildiz/decaf-henson/install!'"$tmpdir/stage"'!g' ./decaf-henson.json
     #sed -ie 's!\\./!'"${FERMI_PREFIX:?}/"'!g' ./decaf-henson.json
     #cp "${FERMI_PREFIX:?}/hostfile_workflow.txt" ./hostfile_workflow.txt
-    cp "${DECAF_HENSON_PREFIX:?}/python/decaf-henson_python" ./decaf-henson_python
+    cp ../henson/python/decaf-henson_python ./decaf-henson_python
 
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH:?}:}${DECAF_PREFIX:?three}/lib
     export DECAF_PREFIX LD_LIBRARY_PATH
+    ls -lah
 """)
 
 
