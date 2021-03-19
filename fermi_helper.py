@@ -220,14 +220,17 @@ dockerfile_template = Template(dedent("""\
     &&   echo "  - automake" \\
     &&   echo "  - hepmc@2.06.10" \\
     &&   echo "  - diy@master ^mpich@3.3.2" \\
+    &&   echo "  packages:" \\
+    &&   echo "    all:" \\
+    &&   echo "      target: [{{ target }}]" \\
     &&   echo "  config:" \\
     &&   echo "    install_tree: /opt/software" \\
     &&   echo "  concretization: together") > /opt/spack-environment/spack.yaml
 
     # Install the software, remove unecessary deps
-    RUN cd /opt/spack-environment && spack install && spack gc -y
+    RUN cd /opt/spack-environment && spack --env . install && spack gc -y
 
-    RUN cd /opt/spack-environment && spack add pythia8 && spack install && spack gc -y
+    RUN true && cd /opt/spack-environment && spack --env . add pythia8 && spack --env . install && spack gc -y
 
     ## Strip all the binaries
     #RUN find -L /opt/view/* -type f -exec readlink -f '{}' \; | \\
@@ -259,6 +262,7 @@ dockerfile_template = Template(dedent("""\
 
     ADD apprentice-latest-nodata.tar.gz /opt
     RUN . /etc/profile && \\
+        export CFLAGS='-march={{ arch }} -mtune={{ arch }}'; \\
         python3.8 -m ensurepip && \\
         python3.8 -m pip install virtualenv && \\
         python3.8 -m virtualenv /opt/venv && \\
@@ -274,6 +278,7 @@ dockerfile_template = Template(dedent("""\
         cd /opt/rivet && \\
         wget https://phab.hepforge.org/source/rivetbootstraphg/browse/3.0.2/rivet-bootstrap?view=raw -O rivet-bootstrap && \\
         chmod +x rivet-bootstrap && \\
+        sed -ie 's!^function conf {.*$!function conf { ./configure CFLAGS=-march={{ arch }} --prefix=$INSTALL_PREFIX "$@"; }!' rivet-bootstrap && \\
         { RIVET_VERSION=2.7.2 YODA_VERSION=1.7.5 HEPMC_VERSION=2.06.09 FASTJET_VERSION=3.3.2 ./rivet-bootstrap || true; } && \\
         rm YODA-1.7.5/pyext/yoda/util.cpp && \\
         RIVET_VERSION=2.7.2 YODA_VERSION=1.7.5 HEPMC_VERSION=2.06.09 FASTJET_VERSION=3.3.2 ./rivet-bootstrap && \\
@@ -323,7 +328,7 @@ def _make_script(interactive: bool) -> str:
     return script
 
 
-def main_build_docker_image(decaf_root, decaf_repo, decaf_repo_branch, tag, only_dependencies, pull_dependencies):
+def main_build_docker_image(decaf_root, decaf_repo, decaf_repo_branch, tag, only_dependencies, pull_dependencies, arch, target):
     if not decaf_root.exists():
         run(
             ['git', 'clone', str(decaf_repo), str(decaf_root)],
@@ -339,6 +344,8 @@ def main_build_docker_image(decaf_root, decaf_repo, decaf_repo_branch, tag, only
         decaf_root=decaf_root.relative_to(Path.cwd()),
         only_dependencies=only_dependencies,
         pull_dependencies=pull_dependencies,
+        arch=arch,
+        target=target,
     ).encode('utf-8')
 
     if only_dependencies:
@@ -428,6 +435,8 @@ def cli():
                            help='e.g. MyUsername/MyImage:latest or my.registry.example.com:5000/MyUsername/MyImage:latest')
     subparser.add_argument('--only-dependencies', action='store_true')
     subparser.add_argument('--pull-dependencies', type=tag)
+    subparser.add_argument('--arch', default='amdfam10')
+    subparser.add_argument('--target', default='k10')
 
     subparser = subparsers.add_parser('run-docker-image')
     subparser.set_defaults(main=main_run_docker_image)
