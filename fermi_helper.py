@@ -19,17 +19,65 @@ EXAMPLE
     Build the Docker image, using pre-built dependencies
         $ python3 fermi_helper.py build-docker-image --pull-dependencies thobson2/decaf-fermi:0.2.0-base
 
-    Run the Docker image
+    Run the workflow within Docker container
         $ python3 fermi_helper.py run-docker-image
 
     Build the dependencies and push them to DockerHub
         $ python3 fermi_helper.py build-docker-image --only-dependencies --tag USERNAME/decaf-fermi:0.2.0-base
+
+    Run a shell within the Docker container interactively
+    	$ python3 fermi_helper.py run-docker-image --interactive
+	docker$ mpirun --hostfile 
+mpirun --hostfile hostfile_workflow.txt -np 4 ./decaf-henson_python
 
     Convert Docker image to Singularity image
         $ python3 fermi_helper.py build-singularity-image
     
     Run Singularity image
         $ python3 fermi_helper.py run-singularity-image
+
+DEBUGGING
+
+    Run the Docker container interactively
+        $ python3 fermi_helper.py run-docker-image --interactively
+
+    Run the workflow directly
+        docker$ mpirun --hostfile hostfile_workflow.txt -np 4 ./decaf-henson_python
+
+    To make things easier, install a text editor
+        docker$ apt-get update
+        docker$ apt-get install -y vim
+
+    To run the workflow in steps, first make a backup of the decaf-henson.json
+    file, before modifying it to remove the second half of the workflow (i.e.
+    the converter.py, approx.py, chi2.py, and new_box.py steps)
+        docker$ cp decaf-henson.json decaf-henson.json.bak
+        docker$ vi decaf-henson.json
+
+    Now run the workflow
+        docker$ mpirun --hostfile hostfile_workflow.txt -np 4 ./decaf-henson_python
+
+    Next, using the backup version of the decaf-henson.json file, extract the
+    command lines to run the second half step-by-step
+        docker$ grep cmdline decaf-henson.json.bak
+
+    Then modify each of the scripts to remove any reference the pyhenson
+    (specifically h.add, h.get, and h.yield_ functions)
+        docker$ vi converter.py  # step = h.get("step") => step = 99
+        docker$ vi approx.py  # nothing to change here
+        docker$ vi chi2.py  # nothing to change here 
+        docker$ vi new_box.py  # nothing to change here
+
+    Now each command line can be run directly, after adding "python" to the
+    beginning, for example (the exact directories will be different)
+        docker$ python ./converter.py converter-henson.h5 /tmp/tmp.OrAXakGCKI/stage/examples/fermi_hep/deleteMe/
+        docker$ python ./approx.py converter-henson.h5 henson_approx.json
+        docker$ python ./chi2.py henson_approx.json exerimental_data.json
+        docker$ python ./new_box.py henson_approx.json.minimization newbox.json
+
+    NOTE: Anything done inside the container will be lost when the
+    "run-docker-image" command finishes. To make lasting changes, modify the
+    "decaf" directory from the host directory and re-run "build-docker-image".
 
 DESCRIPTION
     This script takes care of the build and execution process needed to run the
@@ -114,7 +162,13 @@ BUGS
     incrementally.
 
 CHANGELOG
-    v0.2.1, 15 Octoboer 2020
+    v0.2.2, 18 March 2021
+        Changed the default branch to the new "fermi-workflow" branch.
+
+        Added documentation on running the workflow interactively to aid in
+        debugging.
+
+    v0.2.1, 15 October 2020
         Fixed a problem that would cause template parametrization to fail to
         apply to the workflow which pythia8-diy would error out on.
 
@@ -144,7 +198,6 @@ CHANGELOG
 
 AUTHORS
     Tanner Hobson <thobson2@vols.utk.edu>
-
 """
 
 from subprocess import run
@@ -180,7 +233,7 @@ hermeticscript = dedent("""\
     mkdir conf
     mv mb7tev.txt conf/
     cp hep-fullWorkflow-inputPre.json ./decaf-henson.json
-    sed -ie 's!/home/oyildiz/decaf-henson/install!'"$tmpdir/stage"'!g' ./decaf-henson.json
+    sed -ie 's!/home/oyildiz/mohan/fermi-workflow/install!'"$tmpdir/stage"'!g' ./decaf-henson.json
     #sed -ie 's!\\./!'"${FERMI_PREFIX:?}/"'!g' ./decaf-henson.json
     #cp "${FERMI_PREFIX:?}/hostfile_workflow.txt" ./hostfile_workflow.txt
     cp ../henson/python/decaf-henson_python ./decaf-henson_python
@@ -423,7 +476,7 @@ def cli():
     subparser.set_defaults(main=main_build_docker_image)
     subparser.add_argument('--decaf-root', type=Path, default=Path.cwd() / 'decaf')
     subparser.add_argument('--decaf-repo', default='git@bitbucket.org:tpeterka1/decaf.git')
-    subparser.add_argument('--decaf-repo-branch', default='decaf-henson')
+    subparser.add_argument('--decaf-repo-branch', default='fermi-workflow')
     subparser.add_argument('--tag', default='decaf-fermi:latest', type=tag,
                            help='e.g. MyUsername/MyImage:latest or my.registry.example.com:5000/MyUsername/MyImage:latest')
     subparser.add_argument('--only-dependencies', action='store_true')
