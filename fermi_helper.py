@@ -278,9 +278,9 @@ dockerfile_template = Template(dedent("""\
     &&   echo "  concretization: together") > /opt/spack-environment/spack.yaml
 
     # Install the software, remove unecessary deps
-    RUN cd /opt/spack-environment && spack install && spack gc -y
+    RUN cd /opt/spack-environment && spack --env . install && spack gc -y
 
-    RUN cd /opt/spack-environment && spack add pythia8 && spack install && spack gc -y
+    RUN cd /opt/spack-environment && spack --env . add pythia8 && spack --env . install && spack gc -y
 
     ## Strip all the binaries
     #RUN find -L /opt/view/* -type f -exec readlink -f '{}' \; | \\
@@ -302,6 +302,7 @@ dockerfile_template = Template(dedent("""\
             build-essential \\
             wget \\
             gfortran \\
+            git \\
         && \\
         rm -rf /var/lib/apt/lists/*
 
@@ -310,7 +311,6 @@ dockerfile_template = Template(dedent("""\
     COPY --from=builder /opt/view /opt/view
     COPY --from=builder /etc/profile.d/z10_spack_environment.sh /etc/profile.d/z10_spack_environment.sh
 
-    ADD apprentice-latest-nodata.tar.gz /opt
     RUN . /etc/profile && \\
         python3.8 -m ensurepip && \\
         python3.8 -m pip install virtualenv && \\
@@ -318,7 +318,7 @@ dockerfile_template = Template(dedent("""\
         /opt/venv/bin/python -m pip install \\
             networkx \\
             cython \\
-            /opt/apprentice-latest \\
+            git+https://github.com/HEPonHPC/apprentice.git@6fbf531c4cb6537ef6323e150b854541b0ce961d \\
         && \\
         echo '. /opt/venv/bin/activate' > /etc/profile.d/z15_python_environment.sh
 
