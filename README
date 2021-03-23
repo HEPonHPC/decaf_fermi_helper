@@ -159,6 +159,10 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.3, 23 March 2021
+        Update the version of apprentice within the repository to the latest
+        version from GitHub at this time (commit 6fbf53).
+
     v0.2.2, 18 March 2021
         Changed the default branch to the new "fermi-workflow" branch.
 
