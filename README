@@ -159,6 +159,9 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.4, 9 April 2021
+        Add missing pandas dependency.
+
     v0.2.3, 23 March 2021
         Update the version of apprentice within the repository to the latest
         version from GitHub at this time (commit 6fbf53).

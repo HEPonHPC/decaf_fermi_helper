@@ -162,6 +162,9 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.4, 9 April 2021
+        Add missing pandas dependency.
+
     v0.2.3, 23 March 2021
         Update the version of apprentice within the repository to the latest
         version from GitHub at this time (commit 6fbf53).
@@ -320,6 +323,7 @@ dockerfile_template = Template(dedent("""\
         python3.8 -m pip install virtualenv && \\
         python3.8 -m virtualenv /opt/venv && \\
         /opt/venv/bin/python -m pip install \\
+            pandas \\
             networkx \\
             cython \\
             git+https://github.com/HEPonHPC/apprentice.git@6fbf531c4cb6537ef6323e150b854541b0ce961d \\
