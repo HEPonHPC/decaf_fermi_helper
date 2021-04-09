@@ -159,6 +159,9 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.5, 9 April 2021
+        Fix regression with Spack spec for py-h5py and hdf5 packages.
+
     v0.2.4, 9 April 2021
         Add missing pandas dependency.
 

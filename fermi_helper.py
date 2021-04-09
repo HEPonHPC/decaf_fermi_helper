@@ -162,6 +162,9 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.5, 9 April 2021
+        Fix regression with Spack spec for py-h5py and hdf5 packages.
+
     v0.2.4, 9 April 2021
         Add missing pandas dependency.
 
@@ -274,7 +277,7 @@ dockerfile_template = Template(dedent("""\
     &&   echo "  - boost" \\
     &&   echo "  - cmake" \\
     &&   echo "  - henson +mpi-wrappers +python ^mpich@3.3.2 ^python@3.8.2" \\
-    &&   echo "  - py-h5py ^hdf5@1.10.2 ^mpich@3.3.2 ^python@3.8.2" \\
+    &&   echo "  - py-h5py ^hdf5@1.10.2+hl ^mpich@3.3.2 ^python@3.8.2" \\
     &&   echo "  - py-scipy@1.3.3 ^python@3.8.2" \\
     &&   echo "  - autoconf" \\
     &&   echo "  - automake" \\
