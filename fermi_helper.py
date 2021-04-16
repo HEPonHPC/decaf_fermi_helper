@@ -162,6 +162,9 @@ BUGS
     incrementally.
 
 CHANGELOG
+    v0.2.6, 16 April 2021
+        Add missing zlib package.
+
     v0.2.5, 9 April 2021
         Fix regression with Spack spec for py-h5py and hdf5 packages.
 
@@ -313,6 +316,7 @@ dockerfile_template = Template(dedent("""\
             wget \\
             gfortran \\
             git \\
+            zlib1g-dev \\
         && \\
         rm -rf /var/lib/apt/lists/*
 
