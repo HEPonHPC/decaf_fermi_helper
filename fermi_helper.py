@@ -431,7 +431,7 @@ def main_run_docker_image(tag, interactive):
     script = _make_script(interactive)
 
     run(
-        ['docker', 'run', '-it', '--rm', str(tag), '--rcfile', '/etc/profile', '-c', script, 'decaf-fermi-wrapper'],
+        ['docker', 'run', '-it', '--rm', '--mount', 'type=bind,src=' + str(Path.cwd()) + ',dst=' + str(Path.cwd()), str(tag), '--rcfile', '/etc/profile', '-c', script, 'decaf-fermi-wrapper'],
         check=True,
     )
 
